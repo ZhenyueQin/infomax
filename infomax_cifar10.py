@@ -1,5 +1,14 @@
 #! -*- coding: utf-8 -*-
 
+import os
+os.system('nvcc --version')
+
+import tensorflow as tf
+print(tf.__version__)
+
+import utilities
+out_dir = utilities.init_logging('generated_outs')
+
 import numpy as np
 import glob
 import imageio
@@ -23,13 +32,15 @@ alpha = 0.5 # 全局互信息的loss比重
 beta = 1.5 # 局部互信息的loss比重
 gamma = 0.01 # 先验分布的loss比重
 
-
 # 编码器（卷积与最大池化）
 x_in = Input(shape=(img_dim, img_dim, 3))
+
 x = x_in
 
+print('x in: ', x)
+
 for i in range(3):
-    x = Conv2D(z_dim / 2**(2-i),
+    x = Conv2D(int(z_dim / 2**(2-i)),
                kernel_size=(3,3),
                padding='SAME')(x)
     x = BatchNormalization()(x)
@@ -123,7 +134,7 @@ model_train.add_loss(alpha * global_info_loss + beta * local_info_loss + gamma *
 model_train.compile(optimizer=Adam(1e-3))
 
 model_train.fit(x_train, epochs=50, batch_size=64)
-model_train.save_weights('total_model.cifar10.weights')
+model_train.save_weights(os.path.join(out_dir, 'total_model.cifar10.weights'))
 
 
 # 输出编码器的特征
@@ -156,8 +167,8 @@ def sample_knn(path):
     figure1 = np.clip(figure1, 0, 255)
     figure2 = (figure2 + 1) / 2 * 255
     figure2 = np.clip(figure2, 0, 255)
-    imageio.imwrite(path+'_l2.png', figure1)
-    imageio.imwrite(path+'_cos.png', figure2)
+    imageio.imwrite(os.path.join(out_dir, path+'_l2.png'), figure1)
+    imageio.imwrite(os.path.join(out_dir, path+'_cos.png'), figure2)
 
 
 sample_knn('test')
