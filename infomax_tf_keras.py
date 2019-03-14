@@ -90,6 +90,7 @@ class DIM:
         feature_map_shuffle = keras.layers.Lambda(self.shuffling)(feature_map)
         z_samples_repeat = keras.layers.RepeatVector(4 * 4)(z_samples)
         z_samples_map = keras.layers.Reshape((4, 4, self.args.z_dim))(z_samples_repeat)
+        print('z_samples_map: ', z_samples_map)
         z_f_1 = keras.layers.Concatenate()([z_samples_map, feature_map])
         z_f_2 = keras.layers.Concatenate()([z_samples_map, feature_map_shuffle])
 
@@ -109,6 +110,7 @@ class DIM:
 
     def train_a_model(self):
         self.out_dir = utilities.init_logging('generated_outs')
+        print('out dir: ', self.out_dir)
         model_train = self.get_overall_model()
         model_train.fit(self.x_train, epochs=50, batch_size=64)
         model_train.save_weights(os.path.join(self.out_dir, 'total_model.cifar10.weights'))
@@ -120,8 +122,15 @@ class DIM:
         a_model.load_weights(model_path)
         return a_model
 
-    def sample_knn(self, model, bch_sz=50000):
-        n = 10
+    def investigate_prior(self, model):
+        zs = model.predict(self.x_train, verbose=True)
+        a_mean = zs[4].mean()  # 查看均值（简单观察先验分布有没有达到效果）
+        a_var = zs[5].mean()  # 查看方差（简单观察先验分布有没有达到效果）
+        return a_mean, a_var
+
+
+    def sample_knn(self, model):
+        n = 50
         topn = 10
         figure1 = np.zeros((self.img_dim * n, self.img_dim * topn, 3))
         figure2 = np.zeros((self.img_dim * n, self.img_dim * topn, 3))
@@ -146,5 +155,9 @@ class DIM:
         figure2 = np.clip(figure2, 0, 255)
 
         now = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
-        imageio.imwrite(os.path.join('testing_models', str(now) + '_l2.png'), figure1)
-        imageio.imwrite(os.path.join('testing_models', str(now) + '_cos.png'), figure2)
+        imageio.imwrite(os.path.join('testing_models', str(now) + '_alpha_' + str(self.args.alpha) +
+                                     '_beta_' + str(self.args.beta) +
+                                     '_gamma_' + str(self.args.gamma) + '_l2.png'), figure1)
+        imageio.imwrite(os.path.join('testing_models', str(now) + '_alpha_' + str(self.args.alpha) +
+                                     '_beta_' + str(self.args.beta) +
+                                     '_gamma_' + str(self.args.gamma) + '_cos.png'), figure2)

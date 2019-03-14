@@ -21,15 +21,15 @@ opt = parser.parse_args()
 if opt.alpha is None:
     opt.alpha = 0.5
 else:
-    opt.alpha = int(opt.alpha)
+    opt.alpha = float(opt.alpha)
 if opt.beta is None:
     opt.beta = 1.5
 else:
-    opt.beta = int(opt.beta)
+    opt.beta = float(opt.beta)
 if opt.gamma is None:
     opt.gamma = 0.01
 else:
-    opt.gamma = int(opt.gamma)
+    opt.gamma = float(opt.gamma)
 opt.z_dim = 256
 opt.feature_encoder_ite = 3
 opt.vec_encoder_ite = 2
@@ -46,9 +46,10 @@ elif opt.mission == 'load_a_model':
     a_model = dim.load_a_model(model_path)
     print('a model: ', a_model)
 
-    dim.sample_knn(a_model)
-
-
+    # dim.sample_knn(a_model)
+    a_mean, a_var = dim.investigate_prior(a_model)
+    print('a mean: ', a_mean)
+    print('a var: ', a_var)
 
 
 
